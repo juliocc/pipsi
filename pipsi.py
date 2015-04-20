@@ -6,9 +6,15 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
+
 import click
 from pkg_resources import Requirement
 
+CONFIG_FILE = '~/.pipsirc'
 
 def normalize_package(value):
     # Strips the version and normalizes name
@@ -45,6 +51,18 @@ class Repo(object):
     def __init__(self):
         self.home = os.path.expanduser('~/.local/venvs')
         self.bin_dir = os.path.expanduser('~/.local/bin')
+        self.parse_config()
+
+    def parse_config(self):
+        parser = configparser.SafeConfigParser()
+        parser.read(os.path.expanduser(CONFIG_FILE))
+        try:
+            self.home = parser.get('pipsi', 'home')
+            self.bin_dir = parser.get('pipsi', 'bin_dir')
+        except configparser.NoOptionError, e:
+            pass                # should probably print a warning here
+        except configparser.NoSectionError, e:
+            pass                # should probably print a warning here
 
     def resolve_package(self, spec, python=None):
         url = urlparse(spec)
@@ -355,3 +373,12 @@ def list_cmd(repo):
         click.echo('  Package "%s":' % venv)
         for script in scripts:
             click.echo('    ' + script)
+
+
+@cli.command('config')
+@pass_repo
+def config_cmd(repo):
+    """Lists pipsi's configuration."""
+    click.echo('Current pipsi configuration:')
+    click.echo('  home = %s' % repo.home)
+    click.echo('  bin_dir = %s' % repo.bin_dir)

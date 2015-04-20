@@ -20,8 +20,16 @@ def succeed(msg):
 
 
 def main():
-    print('Installing pipsi')
-    bin_dir = os.path.expanduser('~/.local/bin')
+    if len(sys.argv) == 3:
+        home_dir = os.path.expanduser(sys.argv[1])
+        bin_dir = os.path.expanduser(sys.argv[2])
+        custom_dirs = True
+    else:
+        bin_dir = os.path.expanduser('~/.local/bin')
+        home_dir = os.path.expanduser('~/.local/venvs')
+        custom_dirs = False
+
+    print('Installing pipsi [home_dir={}, bin_dir={}]'.format(home_dir, bin_dir))
 
     if os.name != 'posix':
         fail('So sorry, but pipsi only works on POSIX systems :(')
@@ -34,12 +42,13 @@ def main():
 
     try:
         os.makedirs(bin_dir)
+        os.makedirs(home_dir)
     except OSError:
         pass
 
     import shutil
     from subprocess import Popen
-    venv = os.path.expanduser('~/.local/venvs/pipsi')
+    venv = os.path.join(home_dir, 'pipsi')
 
     def _cleanup():
         try:
@@ -57,16 +66,23 @@ def main():
 
     os.symlink(venv + '/bin/pipsi', bin_dir + '/pipsi')
 
+    if custom_dirs:
+        config  = "[pipsi]\n"
+        config += "home = {}\n".format(home_dir)
+        config += "bin_dir = {}\n".format(bin_dir)
+        with open(os.path.expanduser('~/.pipsirc'), 'w') as f:
+            f.write(config)
+
     if os.system('pipsi --version >/dev/null 2>/dev/null') != 0:
         echo()
         echo('=' * 60)
         echo()
         echo('Warning:')
-        echo('  It looks like ~/.local/bin is not on your PATH so pipsi will')
+        echo('  It looks like %s is not on your PATH so pipsi will' % bin_dir)
         echo('  not work out of the box.  To fix this problem make sure to')
         echo('  add this to your .bashrc / .profile file:')
         echo()
-        echo('  export PATH=~/.local/bin:$PATH')
+        echo('  export PATH=%s:$PATH' % bin_dir)
         echo()
         echo('=' * 60)
         echo()

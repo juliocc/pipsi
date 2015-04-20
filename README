@@ -16,8 +16,20 @@
 
     How does it work?
 
-    pipsi installs each package into ~/.local/venvs/PGKNAME and then
+    By default pipsi installs each package into ~/.local/venvs/PGKNAME and then
     symlinks all new scripts into ~/.local/bin.
+
+    You can change these paths using a .pipsirc file:
+    [pipsi]
+    home = ~/.pipsi/venvs
+    bin_dir ~/bin/
+
+    This would create all new virtualenvs in ~/.pipsi/venvs and place
+    the symlinks in ~/bin
+
+    You can also specify this values at install time using something like this:
+
+      curl https://raw.githubusercontent.com/mitsuhiko/pipsi/master/get-pipsi.py | python - ~/.pipsi/venvs ~/bin
 
     Installing scripts from a package:
 
